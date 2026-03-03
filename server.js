@@ -1,7 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 //  PilotePME - Backend Railway
 //  Connexion Bridge API (Open Banking)
-//  Déployer sur Railway.app
 // ─────────────────────────────────────────────────────────────
 
 const express = require("express");
@@ -12,230 +11,183 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── Variables d'environnement (à définir dans Railway) ────────
 const CLIENT_ID     = process.env.BRIDGE_CLIENT_ID;
 const CLIENT_SECRET = process.env.BRIDGE_CLIENT_SECRET;
 const BRIDGE_URL    = "https://api.bridgeapi.io";
 const API_VERSION   = "2021-06-01";
 
-// Headers communs Bridge
-const bridgeHeaders = (token = null) => ({
-  "Content-Type":        "application/json",
-  "Bridge-Version":      API_VERSION,
-  "Client-Id":           CLIENT_ID,
-  "Client-Secret":       CLIENT_SECRET,
-  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-});
+const bridgeHeaders = (token = null) => {
+  const h = {
+    "Content-Type":   "application/json",
+    "Bridge-Version": API_VERSION,
+    "Client-Id":      CLIENT_ID,
+    "Client-Secret":  CLIENT_SECRET,
+  };
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+};
 
-// ── Stockage en mémoire (simple pour MVP) ─────────────────────
-// En production, utiliser une vraie base de données (Postgres sur Railway)
 const sessions = {};
 
-// ── ROUTES ────────────────────────────────────────────────────
-
 // Health check
-app.get("/", (req, res) => res.json({ status: "ok", app: "PilotePME Backend" }));
+app.get("/", (req, res) => res.json({
+  status: "ok",
+  app: "PilotePME Backend",
+  bridge_client_id_set: !!CLIENT_ID,
+  bridge_secret_set: !!CLIENT_SECRET,
+}));
 
-// 1. Créer un utilisateur Bridge + récupérer le lien de connexion bancaire
+// Debug Bridge
+app.get("/api/debug", async (req, res) => {
+  try {
+    const testRes = await fetch(`${BRIDGE_URL}/v2/users`, {
+      method: "POST",
+      headers: bridgeHeaders(),
+      body: JSON.stringify({
+        email: `test_${Date.now()}@pilotepme.fr`,
+        password: "TestPilote1!",
+      }),
+    });
+    const data = await testRes.json();
+    res.json({ status: testRes.status, bridge_response: data });
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});
+
+// 1. Connexion bancaire
 app.post("/api/auth/connect", async (req, res) => {
   try {
     const { userEmail } = req.body;
     if (!userEmail) return res.status(400).json({ error: "userEmail requis" });
 
-    // Créer l'utilisateur dans Bridge
+    const password = `Pilote${Date.now()}!Aa`;
+
     const userRes = await fetch(`${BRIDGE_URL}/v2/users`, {
       method:  "POST",
       headers: bridgeHeaders(),
-      body:    JSON.stringify({ email: userEmail, password: generatePassword() }),
+      body:    JSON.stringify({ email: userEmail, password }),
     });
     const user = await userRes.json();
-    if (!user.uuid) return res.status(400).json({ error: "Erreur création utilisateur Bridge", details: user });
+    console.log("Bridge create user:", userRes.status, JSON.stringify(user));
 
-    // Authentifier l'utilisateur pour obtenir un access token
+    if (userRes.status !== 200 && userRes.status !== 201 && user.type !== "users_already_exist") {
+      return res.status(400).json({
+        error: `Erreur Bridge (${userRes.status}) : ${user.message || user.type || JSON.stringify(user)}`,
+      });
+    }
+
     const authRes = await fetch(`${BRIDGE_URL}/v2/authenticate`, {
       method:  "POST",
       headers: bridgeHeaders(),
-      body:    JSON.stringify({ email: user.email, password: user.password }),
+      body:    JSON.stringify({ email: userEmail, password }),
     });
     const auth = await authRes.json();
-    if (!auth.access_token) return res.status(400).json({ error: "Erreur authentification Bridge", details: auth });
+    console.log("Bridge auth:", authRes.status, JSON.stringify(auth));
 
-    // Stocker le token en session
-    sessions[userEmail] = {
-      access_token: auth.access_token,
-      user_uuid:    user.uuid,
-      email:        userEmail,
-      password:     user.password,
-    };
+    if (!auth.access_token) {
+      return res.status(400).json({
+        error: `Erreur auth Bridge : ${auth.message || auth.type || JSON.stringify(auth)}`,
+      });
+    }
 
-    // Créer le lien de connexion bancaire (Connect Item)
+    sessions[userEmail] = { access_token: auth.access_token, email: userEmail, password };
+
     const connectRes = await fetch(`${BRIDGE_URL}/v2/connect/items/add/url?country=fr`, {
-      method:  "GET",
       headers: bridgeHeaders(auth.access_token),
     });
     const connect = await connectRes.json();
+    console.log("Bridge connect URL:", connectRes.status, JSON.stringify(connect));
 
-    res.json({
-      success:      true,
-      connect_url:  connect.url,   // URL à ouvrir pour que l'utilisateur connecte sa banque
-      userEmail,
-    });
-
+    res.json({ success: true, connect_url: connect.url, userEmail });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 2. Récupérer les comptes bancaires
+// 2. Comptes
 app.get("/api/accounts", async (req, res) => {
   try {
     const { email } = req.query;
-    const session   = sessions[email];
-    if (!session) return res.status(401).json({ error: "Session non trouvée. Reconnecte-toi." });
-
-    const token = await refreshTokenIfNeeded(session);
-
-    const accountsRes = await fetch(`${BRIDGE_URL}/v2/accounts`, {
-      headers: bridgeHeaders(token),
-    });
-    const data = await accountsRes.json();
-
-    // Formater les comptes pour l'app
-    const comptes = (data.resources || []).map(c => ({
-      id:       c.id,
-      nom:      c.name,
-      iban:     c.iban,
-      solde:    c.balance,
-      devise:   c.currency_code,
-      banque:   c.bank?.name || "Banque inconnue",
-      type:     c.type,
-      updated:  c.updated_at,
-    }));
-
+    const session = sessions[email];
+    if (!session) return res.status(401).json({ error: "Session non trouvée." });
+    const token = await refreshToken(session);
+    const r = await fetch(`${BRIDGE_URL}/v2/accounts`, { headers: bridgeHeaders(token) });
+    const data = await r.json();
+    const comptes = (data.resources || []).map(c => ({ id: c.id, nom: c.name, solde: c.balance, banque: c.bank?.name || "Banque", iban: c.iban }));
     res.json({ comptes });
-
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 3. Récupérer les transactions d'un compte
+// 3. Transactions
 app.get("/api/transactions", async (req, res) => {
   try {
     const { email, account_id, limit = 50 } = req.query;
     const session = sessions[email];
     if (!session) return res.status(401).json({ error: "Session non trouvée." });
-
-    const token = await refreshTokenIfNeeded(session);
-
+    const token = await refreshToken(session);
     const url = account_id
       ? `${BRIDGE_URL}/v2/accounts/${account_id}/transactions?limit=${limit}`
       : `${BRIDGE_URL}/v2/transactions?limit=${limit}`;
-
-    const txRes = await fetch(url, {
-      headers: bridgeHeaders(token),
-    });
-    const data = await txRes.json();
-
-    // Formater les transactions
-    const transactions = (data.resources || []).map(t => ({
-      id:          t.id,
-      date:        t.date,
-      description: t.label,
-      montant:     t.amount,
-      categorie:   t.category?.name || "Autre",
-      is_future:   t.is_future || false,
-    }));
-
+    const r = await fetch(url, { headers: bridgeHeaders(token) });
+    const data = await r.json();
+    const transactions = (data.resources || []).map(t => ({ id: t.id, date: t.date, description: t.label, montant: t.amount, categorie: t.category?.name || "Autre" }));
     res.json({ transactions });
-
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 4. Résumé trésorerie (solde + prévisions basées sur transactions)
+// 4. Trésorerie
 app.get("/api/tresorerie", async (req, res) => {
   try {
     const { email } = req.query;
-    const session   = sessions[email];
+    const session = sessions[email];
     if (!session) return res.status(401).json({ error: "Session non trouvée." });
-
-    const token = await refreshTokenIfNeeded(session);
-
-    // Récupérer tous les comptes
-    const accountsRes = await fetch(`${BRIDGE_URL}/v2/accounts`, {
-      headers: bridgeHeaders(token),
-    });
-    const accountsData = await accountsRes.json();
-    const comptes      = accountsData.resources || [];
-
-    // Solde total
-    const soldeTotal = comptes.reduce((sum, c) => sum + (c.balance || 0), 0);
-
-    // Transactions futures (prévisions)
-    const txRes  = await fetch(`${BRIDGE_URL}/v2/transactions?limit=200`, {
-      headers: bridgeHeaders(token),
-    });
-    const txData = await txRes.json();
-    const txs    = txData.resources || [];
-
-    const today      = new Date();
-    const futuresTx  = txs.filter(t => t.is_future);
-
-    const calcPrevision = (jours) => {
+    const token = await refreshToken(session);
+    const [r1, r2] = await Promise.all([
+      fetch(`${BRIDGE_URL}/v2/accounts`, { headers: bridgeHeaders(token) }),
+      fetch(`${BRIDGE_URL}/v2/transactions?limit=200`, { headers: bridgeHeaders(token) }),
+    ]);
+    const accountsData = await r1.json();
+    const txData = await r2.json();
+    const comptes = accountsData.resources || [];
+    const solde = comptes.reduce((s, c) => s + (c.balance || 0), 0);
+    const txs = txData.resources || [];
+    const today = new Date();
+    const prevision = (jours) => {
       const limite = new Date(today);
       limite.setDate(limite.getDate() + jours);
-      return futuresTx
-        .filter(t => new Date(t.date) <= limite)
-        .reduce((sum, t) => sum + t.amount, 0);
+      return txs.filter(t => t.is_future && new Date(t.date) <= limite).reduce((s, t) => s + t.amount, 0);
     };
-
     res.json({
-      solde_actuel: soldeTotal,
-      solde_30j:    soldeTotal + calcPrevision(30),
-      solde_60j:    soldeTotal + calcPrevision(60),
-      solde_90j:    soldeTotal + calcPrevision(90),
-      nb_comptes:   comptes.length,
-      comptes:      comptes.map(c => ({ nom: c.name, solde: c.balance, banque: c.bank?.name })),
+      solde_actuel: solde,
+      solde_30j: solde + prevision(30),
+      solde_60j: solde + prevision(60),
+      solde_90j: solde + prevision(90),
+      comptes: comptes.map(c => ({ nom: c.name, solde: c.balance, banque: c.bank?.name })),
       derniere_maj: new Date().toISOString(),
     });
-
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── Helpers ───────────────────────────────────────────────────
-
-function generatePassword() {
-  return Math.random().toString(36).slice(-12) + "Aa1!";
-}
-
-async function refreshTokenIfNeeded(session) {
-  // Pour simplifier le MVP, on re-authentifie à chaque fois
-  // En production : stocker l'expiry et ne rafraîchir que si nécessaire
+async function refreshToken(session) {
   try {
-    const authRes = await fetch(`${BRIDGE_URL}/v2/authenticate`, {
-      method:  "POST",
+    const r = await fetch(`${BRIDGE_URL}/v2/authenticate`, {
+      method: "POST",
       headers: bridgeHeaders(),
-      body:    JSON.stringify({ email: session.email, password: session.password }),
+      body: JSON.stringify({ email: session.email, password: session.password }),
     });
-    const auth = await authRes.json();
-    if (auth.access_token) {
-      session.access_token = auth.access_token;
-      return auth.access_token;
-    }
-  } catch (e) {
-    console.error("Erreur refresh token:", e);
-  }
+    const data = await r.json();
+    if (data.access_token) { session.access_token = data.access_token; return data.access_token; }
+  } catch (e) { console.error("Refresh token error:", e); }
   return session.access_token;
 }
 
-// ── Démarrage serveur ─────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`✅ PilotePME backend démarré sur le port ${PORT}`));
