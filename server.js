@@ -14,7 +14,7 @@ app.use(express.json());
 const CLIENT_ID     = process.env.BRIDGE_CLIENT_ID;
 const CLIENT_SECRET = process.env.BRIDGE_CLIENT_SECRET;
 const BRIDGE_URL    = "https://api.bridgeapi.io";
-const API_VERSION   = "2021-06-01";
+const API_VERSION   = "2025-01-15";
 
 const bridgeHeaders = (token = null) => {
   const h = {
