@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  PilotePME - Backend Railway
-//  Connexion Bridge API (Open Banking)
-// ─────────────────────────────────────────────────────────────
-
 const express = require("express");
 const cors    = require("cors");
 const fetch   = (...args) => import("node-fetch").then(({default: f}) => f(...args));
@@ -37,25 +32,42 @@ app.get("/", (req, res) => res.json({
   bridge_secret_set: !!CLIENT_SECRET,
 }));
 
-// Debug Bridge
+// Debug - teste plusieurs endpoints pour trouver le bon
 app.get("/api/debug", async (req, res) => {
+  const results = {};
+
+  // Test v2/users
   try {
-    const testRes = await fetch(`${BRIDGE_URL}/v2/users`, {
+    const r = await fetch(`${BRIDGE_URL}/v2/users`, {
       method: "POST",
       headers: bridgeHeaders(),
-      body: JSON.stringify({
-        email: `test_${Date.now()}@pilotepme.fr`,
-        password: "TestPilote1!",
-      }),
+      body: JSON.stringify({ email: `test_${Date.now()}@pilotepme.fr`, password: "TestPilote1!" }),
     });
-    const data = await testRes.json();
-    res.json({ status: testRes.status, bridge_response: data });
-  } catch (e) {
-    res.json({ error: e.message });
-  }
+    results.v2_users = { status: r.status, body: await r.json() };
+  } catch(e) { results.v2_users = { error: e.message }; }
+
+  // Test v3/users
+  try {
+    const r = await fetch(`${BRIDGE_URL}/v3/users`, {
+      method: "POST",
+      headers: bridgeHeaders(),
+      body: JSON.stringify({ email: `test_${Date.now()}@pilotepme.fr`, password: "TestPilote1!" }),
+    });
+    results.v3_users = { status: r.status, body: await r.json() };
+  } catch(e) { results.v3_users = { error: e.message }; }
+
+  // Test connect URL sans user (flow PKCE)
+  try {
+    const r = await fetch(`${BRIDGE_URL}/v2/connect/items/add/url?country=fr`, {
+      headers: bridgeHeaders(),
+    });
+    results.connect_url_no_auth = { status: r.status, body: await r.json() };
+  } catch(e) { results.connect_url_no_auth = { error: e.message }; }
+
+  res.json(results);
 });
 
-// 1. Connexion bancaire
+// Connexion bancaire
 app.post("/api/auth/connect", async (req, res) => {
   try {
     const { userEmail } = req.body;
@@ -63,41 +75,40 @@ app.post("/api/auth/connect", async (req, res) => {
 
     const password = `Pilote${Date.now()}!Aa`;
 
+    // Créer utilisateur
     const userRes = await fetch(`${BRIDGE_URL}/v2/users`, {
       method:  "POST",
       headers: bridgeHeaders(),
       body:    JSON.stringify({ email: userEmail, password }),
     });
     const user = await userRes.json();
-    console.log("Bridge create user:", userRes.status, JSON.stringify(user));
+    console.log("create user:", userRes.status, JSON.stringify(user));
 
-    if (userRes.status !== 200 && userRes.status !== 201 && user.type !== "users_already_exist") {
-      return res.status(400).json({
-        error: `Erreur Bridge (${userRes.status}) : ${user.message || user.type || JSON.stringify(user)}`,
-      });
+    if (![200, 201].includes(userRes.status) && user.type !== "users_already_exist") {
+      return res.status(400).json({ error: `Bridge: ${user.message || user.errors?.[0]?.message || JSON.stringify(user)}` });
     }
 
+    // Authentifier
     const authRes = await fetch(`${BRIDGE_URL}/v2/authenticate`, {
       method:  "POST",
       headers: bridgeHeaders(),
       body:    JSON.stringify({ email: userEmail, password }),
     });
     const auth = await authRes.json();
-    console.log("Bridge auth:", authRes.status, JSON.stringify(auth));
+    console.log("auth:", authRes.status, JSON.stringify(auth));
 
     if (!auth.access_token) {
-      return res.status(400).json({
-        error: `Erreur auth Bridge : ${auth.message || auth.type || JSON.stringify(auth)}`,
-      });
+      return res.status(400).json({ error: `Auth Bridge: ${auth.message || JSON.stringify(auth)}` });
     }
 
     sessions[userEmail] = { access_token: auth.access_token, email: userEmail, password };
 
+    // URL de connexion bancaire
     const connectRes = await fetch(`${BRIDGE_URL}/v2/connect/items/add/url?country=fr`, {
       headers: bridgeHeaders(auth.access_token),
     });
     const connect = await connectRes.json();
-    console.log("Bridge connect URL:", connectRes.status, JSON.stringify(connect));
+    console.log("connect url:", connectRes.status, JSON.stringify(connect));
 
     res.json({ success: true, connect_url: connect.url, userEmail });
   } catch (err) {
@@ -106,7 +117,7 @@ app.post("/api/auth/connect", async (req, res) => {
   }
 });
 
-// 2. Comptes
+// Comptes
 app.get("/api/accounts", async (req, res) => {
   try {
     const { email } = req.query;
@@ -117,31 +128,24 @@ app.get("/api/accounts", async (req, res) => {
     const data = await r.json();
     const comptes = (data.resources || []).map(c => ({ id: c.id, nom: c.name, solde: c.balance, banque: c.bank?.name || "Banque", iban: c.iban }));
     res.json({ comptes });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Transactions
+// Transactions
 app.get("/api/transactions", async (req, res) => {
   try {
-    const { email, account_id, limit = 50 } = req.query;
+    const { email, limit = 50 } = req.query;
     const session = sessions[email];
     if (!session) return res.status(401).json({ error: "Session non trouvée." });
     const token = await refreshToken(session);
-    const url = account_id
-      ? `${BRIDGE_URL}/v2/accounts/${account_id}/transactions?limit=${limit}`
-      : `${BRIDGE_URL}/v2/transactions?limit=${limit}`;
-    const r = await fetch(url, { headers: bridgeHeaders(token) });
+    const r = await fetch(`${BRIDGE_URL}/v2/transactions?limit=${limit}`, { headers: bridgeHeaders(token) });
     const data = await r.json();
     const transactions = (data.resources || []).map(t => ({ id: t.id, date: t.date, description: t.label, montant: t.amount, categorie: t.category?.name || "Autre" }));
     res.json({ transactions });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. Trésorerie
+// Trésorerie
 app.get("/api/tresorerie", async (req, res) => {
   try {
     const { email } = req.query;
@@ -152,11 +156,9 @@ app.get("/api/tresorerie", async (req, res) => {
       fetch(`${BRIDGE_URL}/v2/accounts`, { headers: bridgeHeaders(token) }),
       fetch(`${BRIDGE_URL}/v2/transactions?limit=200`, { headers: bridgeHeaders(token) }),
     ]);
-    const accountsData = await r1.json();
-    const txData = await r2.json();
-    const comptes = accountsData.resources || [];
+    const { resources: comptes = [] } = await r1.json();
+    const { resources: txs = [] } = await r2.json();
     const solde = comptes.reduce((s, c) => s + (c.balance || 0), 0);
-    const txs = txData.resources || [];
     const today = new Date();
     const prevision = (jours) => {
       const limite = new Date(today);
@@ -171,9 +173,7 @@ app.get("/api/tresorerie", async (req, res) => {
       comptes: comptes.map(c => ({ nom: c.name, solde: c.balance, banque: c.bank?.name })),
       derniere_maj: new Date().toISOString(),
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 async function refreshToken(session) {
