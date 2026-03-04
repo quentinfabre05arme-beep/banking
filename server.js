@@ -104,7 +104,7 @@ app.post("/api/auth/connect", async (req, res) => {
     const connectRes = await fetch(`${BRIDGE_URL}/v3/aggregation/connect-sessions`, {
       method:  "POST",
       headers: bridgeHeaders(tokenData.access_token),
-      body:    JSON.stringify({ country: "fr" }),
+      body:    JSON.stringify({ capabilities: ["data_aggregation"] }),
     });
     const connect = await connectRes.json();
     console.log("connect session:", connectRes.status, JSON.stringify(connect));
