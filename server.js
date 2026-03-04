@@ -65,7 +65,7 @@ app.get("/api/debug", async (req, res) => {
       const r = await fetch(`${BRIDGE_URL}/v3/aggregation/connect-sessions`, {
         method: "POST",
         headers: bridgeHeaders(token),
-        body: JSON.stringify({}),
+        body: JSON.stringify({ user_email: `debug_${Date.now()}@pilotepme.fr` }),
       });
       results.connect_session = { status: r.status, body: await r.json() };
     } catch(e) { results.connect_session = { error: e.message }; }
@@ -117,7 +117,7 @@ app.post("/api/auth/connect", async (req, res) => {
     const connectRes = await fetch(`${BRIDGE_URL}/v3/aggregation/connect-sessions`, {
       method:  "POST",
       headers: bridgeHeaders(tokenData.access_token),
-      body:    JSON.stringify({}),
+      body:    JSON.stringify({ user_email: userEmail }),
     });
     const connect = await connectRes.json();
     console.log("connect session:", connectRes.status, JSON.stringify(connect));
