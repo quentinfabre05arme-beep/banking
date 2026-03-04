@@ -58,6 +58,19 @@ app.get("/api/debug", async (req, res) => {
     results.get_token = { status: r.status, body: await r.json() };
   } catch(e) { results.get_token = { error: e.message }; }
 
+  // 3. Test connect-sessions avec token obtenu
+  if (results.get_token?.body?.access_token) {
+    try {
+      const token = results.get_token.body.access_token;
+      const r = await fetch(`${BRIDGE_URL}/v3/aggregation/connect-sessions`, {
+        method: "POST",
+        headers: bridgeHeaders(token),
+        body: JSON.stringify({}),
+      });
+      results.connect_session = { status: r.status, body: await r.json() };
+    } catch(e) { results.connect_session = { error: e.message }; }
+  }
+
   res.json(results);
 });
 
@@ -104,7 +117,7 @@ app.post("/api/auth/connect", async (req, res) => {
     const connectRes = await fetch(`${BRIDGE_URL}/v3/aggregation/connect-sessions`, {
       method:  "POST",
       headers: bridgeHeaders(tokenData.access_token),
-      body:    JSON.stringify({ capabilities: ["data_aggregation"] }),
+      body:    JSON.stringify({}),
     });
     const connect = await connectRes.json();
     console.log("connect session:", connectRes.status, JSON.stringify(connect));
