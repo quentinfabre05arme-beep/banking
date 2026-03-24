@@ -1,10 +1,14 @@
 const express = require("express");
 const cors    = require("cors");
+const path    = require("path");
 const fetch   = (...args) => import("node-fetch").then(({default: f}) => f(...args));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve the Huberman Lab Knowledge Hub frontend
+app.use(express.static(path.join(__dirname, "public")));
 
 const CLIENT_ID     = process.env.BRIDGE_CLIENT_ID;
 const CLIENT_SECRET = process.env.BRIDGE_CLIENT_SECRET;
@@ -25,12 +29,10 @@ const bridgeHeaders = (token = null) => {
 
 const sessions = {};
 
-// Health check
-app.get("/", (req, res) => res.json({
+// Health check (API)
+app.get("/api/health", (req, res) => res.json({
   status: "ok",
-  app: "PilotePME Backend",
-  bridge_client_id_set: !!CLIENT_ID,
-  bridge_secret_set: !!CLIENT_SECRET,
+  app: "Huberman Lab Knowledge Hub",
 }));
 
 // Debug

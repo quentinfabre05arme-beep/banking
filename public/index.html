@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huberman Lab — Knowledge Hub</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0d14;
+      --surface:   #111520;
+      --card:      #161c2d;
+      --card-alt:  #1c2340;
+      --border:    #2a3356;
+      --accent:    #4f8ef7;
+      --accent2:   #7c5cfc;
+      --green:     #2dd4a0;
+      --orange:    #f77f4f;
+      --text:      #e8eaf6;
+      --muted:     #7b84a8;
+      --tag-bg:    #1e2a4a;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d1220 0%, #131b35 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      line-height: 1;
+    }
+
+    nav { display: flex; gap: 4px; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    nav a:hover { color: var(--text); background: var(--card); }
+    nav a.active { color: var(--accent); background: rgba(79,142,247,0.1); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 5rem 2rem 3.5rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(79,142,247,0.12) 0%, transparent 70%),
+        var(--bg);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(79,142,247,0.1);
+      border: 1px solid rgba(79,142,247,0.3);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 0%, #a8b8e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 560px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ── Episode Card ── */
+    .episode-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .episode-card:hover { border-color: var(--accent); }
+
+    .episode-header {
+      padding: 2rem 2rem 0;
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .ep-number {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      letter-spacing: -1px;
+    }
+
+    .ep-1 .ep-number { background: linear-gradient(135deg, #4f8ef7, #7c5cfc); }
+    .ep-2 .ep-number { background: linear-gradient(135deg, #2dd4a0, #4f8ef7); }
+
+    .ep-meta { flex: 1; }
+
+    .ep-meta h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 0.5rem;
+    }
+
+    .ep-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: var(--tag-bg);
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      letter-spacing: 0.3px;
+    }
+
+    .tag.accent { background: rgba(79,142,247,0.1); color: var(--accent); border-color: rgba(79,142,247,0.3); }
+    .tag.green  { background: rgba(45,212,160,0.1); color: var(--green);  border-color: rgba(45,212,160,0.3); }
+
+    /* ── Inner Tabs ── */
+    .ep-tabs {
+      display: flex;
+      gap: 0;
+      padding: 1.5rem 2rem 0;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .ep-tab {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+
+    .ep-tab:hover { color: var(--text); }
+    .ep-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Tab Content ── */
+    .ep-content { padding: 2rem; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Recap ── */
+    .recap-intro {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .recap-intro strong { color: var(--accent); }
+
+    .recap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .key-concept {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+
+    .key-concept:hover { border-color: var(--accent); }
+
+    .concept-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .concept-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .concept-body {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .protocol-box {
+      background: linear-gradient(135deg, rgba(79,142,247,0.06), rgba(124,92,252,0.06));
+      border: 1px solid rgba(79,142,247,0.25);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+
+    .protocol-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .protocol-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .protocol-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .protocol-list li::before {
+      content: '→';
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Instagram Panels ── */
+    .insta-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .copy-btn {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+    .content-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .content-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .content-block-body {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.75;
+      white-space: pre-line;
+    }
+
+    /* Carousel slides */
+    .slides {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .slide {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+    }
+
+    .slide-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .slide-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    .slide-body {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Stories */
+    .stories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .story-card {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      aspect-ratio: 9/16;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 320px;
+    }
+
+    .story-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .story-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .story-emoji { font-size: 2.5rem; }
+
+    .story-headline {
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .story-body {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .story-cta {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.3px;
+    }
+
+    /* Science quote */
+    .science-quote {
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1rem;
+      background: rgba(79,142,247,0.04);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-style: italic;
+      margin: 1.25rem 0;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero { padding: 3rem 1rem 2rem; }
+      main { padding: 2rem 1rem 4rem; }
+      .episode-header { flex-direction: column; gap: 1rem; }
+      .ep-tabs { padding: 1rem 1rem 0; }
+      .ep-content { padding: 1.25rem; }
+      .stories-grid { grid-template-columns: 1fr 1fr; }
+      nav { display: none; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🧠</div>
+      <div>
+        <span class="logo-text">Huberman Lab</span>
+        <span class="logo-sub">Knowledge Hub</span>
+      </div>
+    </a>
+    <nav>
+      <a href="#ep1" class="active">Episode 1</a>
+      <a href="#ep2">Episode 2</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-badge">🔬 Science-Backed Content</div>
+  <h1>Your Huberman Lab<br>Knowledge Hub</h1>
+  <p>Episode recaps, key science, and ready-to-post Instagram content — all in one place.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label">Episodes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">40+</div>
+      <div class="stat-label">Key Concepts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">8</div>
+      <div class="stat-label">Instagram Assets</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main ── -->
+<main>
+
+  <p class="section-title">Episode Library</p>
+  <p class="section-sub">Click any tab to explore recaps, carousels, reels, captions, and stories.</p>
+
+  <!-- ════════════════════════════════════════
+       EPISODE 1
+  ════════════════════════════════════════ -->
+  <div class="episode-card ep-1" id="ep1">
+    <div class="episode-header">
+      <div class="ep-number">01</div>
+      <div class="ep-meta">
+        <h2>How Your Nervous System Works &amp; Changes</h2>
+        <div class="ep-tags">
+          <span class="tag accent">Neuroscience</span>
+          <span class="tag">Neuroplasticity</span>
+          <span class="tag">Neuromodulators</span>
+          <span class="tag green">Tools Included</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep-tabs">
+      <button class="ep-tab active" onclick="switchTab(this,'ep1','recap')">📋 Recap</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep1','carousel')">🎠 Carousel</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep1','reel')">🎬 Reel Script</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep1','caption')">✍️ Caption</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep1','stories')">📱 Stories</button>
+    </div>
+
+    <div class="ep-content">
+
+      <!-- Recap -->
+      <div class="tab-panel active" id="ep1-recap">
+        <div class="recap-intro">
+          In the inaugural episode, <strong>Dr. Andrew Huberman</strong> breaks down the architecture of the nervous system — from how it senses the world to how it drives behavior — and explains the science of <strong>neuroplasticity</strong>: the brain's lifelong ability to rewire itself. The episode delivers both foundational neuroscience and actionable tools anyone can use today.
+        </div>
+
+        <div class="recap-grid">
+          <div class="key-concept">
+            <div class="concept-icon">🕸️</div>
+            <div class="concept-title">The Nervous System: An Overview</div>
+            <div class="concept-body">The nervous system includes the <em>central</em> (brain + spinal cord) and <em>peripheral</em> (all other nerves) branches. Sensory neurons detect the world; motor neurons drive movement. Everything you think, feel, and do is mediated by electrical signals and chemical messengers.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🔁</div>
+            <div class="concept-title">Neuroplasticity Explained</div>
+            <div class="concept-body">Neuroplasticity is the nervous system's capacity to change its wiring in response to experience. It is NOT passive — it requires deliberate focus and stress signals to trigger the molecular cascades that strengthen or prune synapses. In adults it is experience-dependent and effort-dependent.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">⚗️</div>
+            <div class="concept-title">The Four Neuromodulators</div>
+            <div class="concept-body"><strong>Dopamine</strong> → motivation &amp; pursuit. <strong>Serotonin</strong> → contentment &amp; satiety. <strong>Acetylcholine</strong> → focus &amp; attention spotlight. <strong>Epinephrine (adrenaline)</strong> → alertness &amp; energy. These chemical signals set the "gain" on entire circuits, biasing which neurons fire.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🎯</div>
+            <div class="concept-title">Top-Down vs. Bottom-Up</div>
+            <div class="concept-body">Bottom-up processing = reflexes driven by the sensory world (you hear a loud noise, you startle). Top-down = prefrontal cortex overriding impulses via deliberate thought. Neuroplasticity strengthens top-down control through practice and focused attention.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">😤</div>
+            <div class="concept-title">Stress as the Entry Point</div>
+            <div class="concept-body">A mild-to-moderate stress signal (norepinephrine + epinephrine release) is required to open the "gate" for plasticity. The stress itself doesn't cause change — it flags the relevant neural circuits so that subsequent deep rest can consolidate the new connections.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">😴</div>
+            <div class="concept-title">Sleep &amp; NSDR: Where Change Happens</div>
+            <div class="concept-body">Actual synaptic remodeling occurs during sleep (especially slow-wave and REM) and during Non-Sleep Deep Rest (NSDR/Yoga Nidra). These states replay and consolidate what was learned during focused effort. No rest = no lasting change.</div>
+          </div>
+        </div>
+
+        <div class="science-quote">
+          "Neuroplasticity is not about doing more — it's about focusing intensely for short bouts, then resting deeply. The rest is where the rewiring happens." — Andrew Huberman
+        </div>
+
+        <div class="protocol-box">
+          <div class="protocol-title">🛠 Actionable Tools from Ep. 1</div>
+          <ul class="protocol-list">
+            <li>Do 90-minute focused work sessions — this matches a natural ultradian rhythm.</li>
+            <li>Practice deliberate attention: when your mind wanders, gently return focus. Each return IS the training.</li>
+            <li>Use NSDR (Yoga Nidra) or a short nap post-learning to accelerate consolidation.</li>
+            <li>Prioritize 7–9 hours of quality sleep nightly — non-negotiable for neuroplasticity.</li>
+            <li>Understand your neuromodulators: dopamine drives the desire to learn; acetylcholine pins attention to what matters.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Carousel -->
+      <div class="tab-panel" id="ep1-carousel">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">📲 Instagram Carousel — 7 Slides</span>
+            <button class="copy-btn" onclick="copyCarousel('ep1')">📋 Copy All Slides</button>
+          </div>
+          <div class="slides" id="ep1-carousel-data">
+            <div class="slide">
+              <div class="slide-num">Slide 1 — Cover</div>
+              <div class="slide-title">Your brain can rewire itself at ANY age. 🧠</div>
+              <div class="slide-body">Here's what Huberman Lab Ep. 1 teaches about neuroplasticity — and exactly how to use it. (Swipe →)</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 2</div>
+              <div class="slide-title">What IS neuroplasticity?</div>
+              <div class="slide-body">It's your nervous system's ability to change its wiring based on experience. Neurons that fire together, wire together. But in adults, this is NOT automatic — it requires deliberate effort + deep rest.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 3</div>
+              <div class="slide-title">4 chemicals that run your brain</div>
+              <div class="slide-body">🔵 Dopamine → pursuit &amp; motivation
+🟢 Serotonin → calm &amp; contentment
+🟡 Acetylcholine → laser focus
+🔴 Epinephrine → energy &amp; alertness
+
+These neuromodulators set which circuits are "available to change."</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 4</div>
+              <div class="slide-title">Stress opens the gate 🔑</div>
+              <div class="slide-body">A mild stress signal releases norepinephrine, flagging the active neurons. This is the signal that says: "these circuits matter — strengthen them." Without some stress, no plasticity signal is sent.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 5</div>
+              <div class="slide-title">But rest is where change is MADE</div>
+              <div class="slide-body">The actual synaptic remodeling happens during:
+✅ Deep sleep (slow-wave + REM)
+✅ NSDR / Yoga Nidra (20 min)
+✅ Short naps post-learning
+
+Focus → rest → repeat. That's the formula.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 6</div>
+              <div class="slide-title">Your mind wandering = your training 🏋️</div>
+              <div class="slide-body">Every time you notice your mind has drifted and you pull attention back, you are literally training the neural circuits for focus. Distraction isn't failure — it's the rep.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 7 — CTA</div>
+              <div class="slide-title">The 3-step protocol 📋</div>
+              <div class="slide-body">1️⃣ 90-min focused work block (ultradian rhythm)
+2️⃣ 20-min NSDR or nap immediately after
+3️⃣ 7–9 hrs sleep every night
+
+Save this. Start today.
+Follow for weekly Huberman breakdowns →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reel Script -->
+      <div class="tab-panel" id="ep1-reel">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">🎬 Reel Script (~60 sec)</span>
+            <button class="copy-btn" onclick="copyText('ep1-reel-script')">📋 Copy Script</button>
+          </div>
+          <div class="content-block-body" id="ep1-reel-script">HOOK (0–3s):
+"Your brain is physically changing right now. Here's how to control it."
+
+BODY (3–45s):
+"Huberman Lab Episode 1 is all about neuroplasticity — your brain's ability to rewire itself at any age.
+
+Here's the key insight most people miss: stress is NOT the enemy. A mild stress signal releases norepinephrine, which flags the neurons you're using and says 'these matter — strengthen them.' But here's the catch — the actual rewiring doesn't happen during focus. It happens during REST.
+
+Deep sleep, NSDR — which is basically a guided deep relaxation — or even a short nap after learning. That's when your brain consolidates everything.
+
+So the formula is: focused effort, then deliberate rest. Over and over.
+
+And attention training? Every single time your mind wanders and you bring it back — that IS the exercise. You are literally doing a rep for your prefrontal cortex."
+
+CTA (45–60s):
+"Try this today: 90-minute focus block, no phone. Then 20 minutes of NSDR — search Yoga Nidra on YouTube. That's the protocol.
+
+Follow for more science-backed breakdowns of Huberman Lab. Link in bio for the full episode."</div>
+        </div>
+        <div class="content-block" style="background: rgba(79,142,247,0.04); border-color: rgba(79,142,247,0.2);">
+          <div class="insta-label">🎤 Delivery Notes</div>
+          <div class="content-block-body" style="font-size:0.83rem; color: var(--muted);">• Speak directly to camera, calm authority — think science teacher energy, not hype
+• Slight pause after "the actual rewiring doesn't happen during focus."
+• Use a clean background or b-roll of brain diagrams / neurons
+• On-screen text overlays for the 3 key terms: Neuroplasticity / NSDR / Ultradian Rhythm
+• No background music or very low ambient instrumental only</div>
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="tab-panel" id="ep1-caption">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">✍️ Instagram Caption</span>
+            <button class="copy-btn" onclick="copyText('ep1-caption-text')">📋 Copy Caption</button>
+          </div>
+          <div class="content-block-body" id="ep1-caption-text">Your brain is literally rewiring right now — and you can control HOW it rewires. 🧠
+
+Huberman Lab Ep. 1 breaks down neuroplasticity in a way that finally makes sense:
+
+→ It requires EFFORT + REST (not just effort)
+→ Stress is the signal that opens the gate to change
+→ Sleep &amp; NSDR are where the rewiring actually happens
+→ Every time your mind wanders &amp; you refocus = a literal training rep
+
+The 3-step protocol Dr. Huberman recommends:
+1. 90-minute focused work block
+2. 20-min NSDR / Yoga Nidra right after
+3. 7–9 hrs quality sleep, every night
+
+This isn't motivation. This is neuroscience.
+
+💾 Save this post &amp; share it with someone who thinks they "just can't focus."
+
+—
+🎧 Full episode: Huberman Lab Podcast, Episode 1
+📩 Weekly science breakdowns → link in bio
+
+#HubermanLab #Neuroscience #Neuroplasticity #BrainHealth #ScienceBacked #NSDR #YogaNidra #FocusTips #LearnBetter #MindBody #AndrewHuberman #PodcastNotes #BrainScience #GrowthMindset #Productivity</div>
+        </div>
+      </div>
+
+      <!-- Stories -->
+      <div class="tab-panel" id="ep1-stories">
+        <div class="content-block-header" style="margin-bottom:1rem;">
+          <span class="insta-label">📱 Instagram Stories — 4 Slides</span>
+        </div>
+        <div class="stories-grid">
+          <div class="story-card">
+            <div class="story-num">Story 1 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">🧠</div>
+              <div class="story-headline">Your brain can change at ANY age.</div>
+              <div class="story-body">Ep. 1 of Huberman Lab is one of the most important episodes for understanding how your mind actually works.</div>
+            </div>
+            <div class="story-cta">Tap → to see the key science</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 2 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">⚗️</div>
+              <div class="story-headline">4 chemicals running your brain right now:</div>
+              <div class="story-body">
+                🔵 Dopamine → pursuit<br>
+                🟢 Serotonin → calm<br>
+                🟡 Acetylcholine → focus<br>
+                🔴 Epinephrine → energy<br><br>
+                These set which circuits can change.
+              </div>
+            </div>
+            <div class="story-cta">Swipe → for the protocol</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 3 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">😴</div>
+              <div class="story-headline">Rest is where the rewiring happens.</div>
+              <div class="story-body">Focus opens the gate. Sleep &amp; NSDR walk through it. Without deep rest, nothing sticks. Science fact.</div>
+            </div>
+            <div class="story-cta">One more →</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 4 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">🛠</div>
+              <div class="story-headline">Try this today:</div>
+              <div class="story-body">
+                ✅ 90-min focus block<br>
+                ✅ 20-min NSDR after<br>
+                ✅ 7–9 hrs sleep<br><br>
+                That's the Huberman Ep. 1 protocol.
+              </div>
+            </div>
+            <div class="story-cta">Save &amp; share with a friend 🙌</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       EPISODE 2
+  ════════════════════════════════════════ -->
+  <div class="episode-card ep-2" id="ep2">
+    <div class="episode-header">
+      <div class="ep-number">02</div>
+      <div class="ep-meta">
+        <h2>Master Your Sleep &amp; Be More Alert When Awake</h2>
+        <div class="ep-tags">
+          <span class="tag accent">Sleep Science</span>
+          <span class="tag">Circadian Biology</span>
+          <span class="tag">Light &amp; Cortisol</span>
+          <span class="tag green">Tools Included</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep-tabs">
+      <button class="ep-tab active" onclick="switchTab(this,'ep2','recap')">📋 Recap</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep2','carousel')">🎠 Carousel</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep2','reel')">🎬 Reel Script</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep2','caption')">✍️ Caption</button>
+      <button class="ep-tab" onclick="switchTab(this,'ep2','stories')">📱 Stories</button>
+    </div>
+
+    <div class="ep-content">
+
+      <!-- Recap -->
+      <div class="tab-panel active" id="ep2-recap">
+        <div class="recap-intro">
+          Episode 2 dives deep into the science of sleep and wakefulness. <strong>Dr. Huberman</strong> explains how light, temperature, adenosine, cortisol, and melatonin interact to govern your circadian rhythm — and delivers a science-backed toolkit to optimize both your sleep quality and daytime alertness without relying on supplements.
+        </div>
+
+        <div class="recap-grid">
+          <div class="key-concept">
+            <div class="concept-icon">☀️</div>
+            <div class="concept-title">Morning Sunlight: The Master Timer</div>
+            <div class="concept-body">Within 30–60 minutes of waking, bright outdoor light (ideally sunlight, minimum 5–10 min) hits the retina and triggers a cortisol pulse from the adrenal glands. This sets your circadian clock, raises alertness, and schedules your melatonin release ~12–16 hours later. Overcast skies still count — just go outside.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">😴</div>
+            <div class="concept-title">Adenosine: The Sleep Pressure Molecule</div>
+            <div class="concept-body">Adenosine accumulates in the brain throughout the day — the longer you're awake, the more builds up. High adenosine = sleepiness. Caffeine works by blocking adenosine receptors (not destroying adenosine). Sleep clears it. This is your body's main sleep/wake pressure system.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">☕</div>
+            <div class="concept-title">Strategic Caffeine Timing</div>
+            <div class="concept-body">Huberman recommends delaying caffeine 90–120 minutes after waking. Cortisol is naturally high early morning — caffeine on top of it can cause afternoon crashes and disrupt sleep. Wait for cortisol to drop, then use caffeine to extend alertness without the crash.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🌙</div>
+            <div class="concept-title">Melatonin: The Darkness Signal</div>
+            <div class="concept-body">Melatonin doesn't make you sleep — it signals darkness and shifts your "sleep window." The pineal gland releases it ~2 hours before sleep. Bright light at night (especially blue/white light) suppresses melatonin, delaying sleep onset. Even dim room lights can disrupt it.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🌡️</div>
+            <div class="concept-title">Temperature &amp; Sleep Onset</div>
+            <div class="concept-body">Core body temperature must drop 1–3°F to fall and stay asleep. A cool bedroom (65–68°F / 18–20°C) accelerates this. A warm bath or shower paradoxically helps — it pulls blood to the surface, which releases core heat. Exercise too close to bedtime raises core temp and delays sleep.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🔄</div>
+            <div class="concept-title">Sleep Architecture: Stages Matter</div>
+            <div class="concept-body">Sleep cycles (~90 min each) include light sleep → slow-wave (deep) sleep → REM. Early night cycles are heavy on slow-wave (body repair, hormones, memory consolidation). Late night cycles are heavy on REM (emotional processing, creativity). Cutting sleep short disproportionately kills REM.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">🧘</div>
+            <div class="concept-title">NSDR / Yoga Nidra for Recovery</div>
+            <div class="concept-body">Non-Sleep Deep Rest protocols can replenish dopamine levels, reduce cortisol, and provide partial sleep-like benefits in 20 minutes. Huberman uses NSDR when sleep-deprived to restore cognitive function. Even a short eyes-closed rest (no phone) provides some benefit.</div>
+          </div>
+          <div class="key-concept">
+            <div class="concept-icon">💊</div>
+            <div class="concept-title">Supplement Stack (Optional)</div>
+            <div class="concept-body">If behavioral tools aren't enough: <strong>Magnesium threonate/glycinate</strong> (300–400mg), <strong>L-Theanine</strong> (100–200mg), <strong>Apigenin</strong> (50mg), ~30–60 min before sleep. Low-dose melatonin (0.1–0.3 mg) may help but use sparingly. Always behavior-first.</div>
+          </div>
+        </div>
+
+        <div class="science-quote">
+          "Light is the most powerful signal to your brain about what time it is. Get sunlight in your eyes in the morning — it's not optional, it's foundational." — Andrew Huberman
+        </div>
+
+        <div class="protocol-box">
+          <div class="protocol-title">🛠 The Sleep Optimization Protocol — Ep. 2</div>
+          <ul class="protocol-list">
+            <li>View bright outdoor light within 30–60 min of waking (5–10 min minimum, no sunglasses).</li>
+            <li>Delay caffeine 90–120 minutes post-waking to avoid afternoon crashes.</li>
+            <li>Avoid bright, overhead light after 10 PM — use dim/amber lights instead.</li>
+            <li>Keep bedroom temperature 65–68°F (18–20°C) for optimal sleep onset.</li>
+            <li>No vigorous exercise within 2–3 hours of bedtime (raises core temp).</li>
+            <li>Use NSDR/Yoga Nidra when sleep-deprived to restore function.</li>
+            <li>Aim for consistent wake time even on weekends — anchors the circadian clock.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Carousel -->
+      <div class="tab-panel" id="ep2-carousel">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">📲 Instagram Carousel — 8 Slides</span>
+            <button class="copy-btn" onclick="copyCarousel('ep2')">📋 Copy All Slides</button>
+          </div>
+          <div class="slides" id="ep2-carousel-data">
+            <div class="slide">
+              <div class="slide-num">Slide 1 — Cover</div>
+              <div class="slide-title">Bad sleep isn't just tiredness — it's destroying your brain. ☀️</div>
+              <div class="slide-body">Huberman Lab Ep. 2: the science of sleep most people have completely backwards. (Swipe →)</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 2</div>
+              <div class="slide-title">Your circadian clock needs one thing first:</div>
+              <div class="slide-body">Morning sunlight → within 30–60 min of waking.
+
+This one habit sets your cortisol pulse, kills grogginess, and schedules melatonin release 12–16 hrs later. It costs zero dollars and takes 10 minutes.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 3</div>
+              <div class="slide-title">Stop drinking coffee the moment you wake up.</div>
+              <div class="slide-body">Cortisol is naturally at its peak in the first 60–90 min after waking. Coffee on top = afternoon energy crash + worse sleep.
+
+Wait 90 minutes. Then drink your coffee. Game changer.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 4</div>
+              <div class="slide-title">Adenosine: why you get tired 💤</div>
+              <div class="slide-body">A molecule called adenosine builds up in your brain while you're awake. More adenosine = more sleepiness.
+
+Caffeine doesn't destroy it — it blocks the receptor. Sleep clears it.
+
+This is why you crash when the caffeine wears off.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 5</div>
+              <div class="slide-title">Light at night is the #1 sleep killer 🌙</div>
+              <div class="slide-body">Bright light after 10 PM suppresses melatonin — your "darkness signal."
+
+Even dim overhead lights can delay sleep by 1–2 hours.
+
+Switch to: dim lamps, amber light, or candlelight. Your phone's night mode isn't enough.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 6</div>
+              <div class="slide-title">Temperature = sleep onset 🌡️</div>
+              <div class="slide-body">Your body must drop 1–3°F in core temp to fall asleep.
+
+✅ Cool bedroom: 65–68°F
+✅ Warm shower before bed (paradoxically helps — releases heat)
+❌ Hard exercise within 3 hrs of bed</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 7</div>
+              <div class="slide-title">REM sleep isn't a luxury — it's emotional medicine</div>
+              <div class="slide-body">REM sleep (late in the night) processes emotions, cements creativity, and strips the emotional charge from painful memories.
+
+Sleeping only 6 hrs cuts up to 50% of your REM. This is why chronically under-rested people are more anxious, reactive, and foggy.</div>
+            </div>
+            <div class="slide">
+              <div class="slide-num">Slide 8 — CTA</div>
+              <div class="slide-title">The 4-step sleep protocol 🛠</div>
+              <div class="slide-body">1️⃣ Sunlight within 60 min of waking
+2️⃣ Coffee 90 min after waking
+3️⃣ Dim lights after 10 PM
+4️⃣ Cool bedroom, consistent wake time
+
+Free. Science-backed. Start tonight.
+Follow for more Huberman Lab breakdowns →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reel Script -->
+      <div class="tab-panel" id="ep2-reel">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">🎬 Reel Script (~60 sec)</span>
+            <button class="copy-btn" onclick="copyText('ep2-reel-script')">📋 Copy Script</button>
+          </div>
+          <div class="content-block-body" id="ep2-reel-script">HOOK (0–3s):
+"The moment you check your phone in bed, you're sabotaging your sleep tonight AND tomorrow night. Here's why."
+
+BODY (3–45s):
+"Huberman Lab Episode 2 is the definitive guide to sleep — and it starts with something most people get completely wrong.
+
+Step one: sunlight. Within 30 to 60 minutes of waking, you need bright light in your eyes. Not through a window — outside. This triggers a cortisol pulse that wakes your brain up properly AND sets a timer. Twelve to sixteen hours later, your body releases melatonin and you get sleepy. Miss that morning light? Your whole system drifts.
+
+Step two: delay your coffee. Cortisol is already high the first hour after waking. Adding caffeine spikes your system unnecessarily and causes a hard crash at 2 PM. Wait 90 minutes — then drink it.
+
+Step three: after 10 PM, kill the bright lights. Any overhead light suppresses melatonin. Dim lamps only. Your phone's night mode is not enough.
+
+And here's the wild one: a warm shower before bed actually helps. It pulls blood to your skin surface, which releases core body heat, which drops your core temperature, which is exactly what your body needs to fall asleep."
+
+CTA (45–60s):
+"Four free tools. One night to test them. Your brain literally cannot function without quality sleep.
+
+Follow for more Huberman Lab science. Save this for tonight."</div>
+        </div>
+        <div class="content-block" style="background: rgba(45,212,160,0.04); border-color: rgba(45,212,160,0.2);">
+          <div class="insta-label">🎤 Delivery Notes</div>
+          <div class="content-block-body" style="font-size:0.83rem; color: var(--muted);">• Open hook with slight urgency — not fear-mongering, but conviction
+• Slow down at "Twelve to sixteen hours later" — let that land
+• Use b-roll: sunrise, coffee mug, dim lamp, person sleeping
+• On-screen keywords: ADENOSINE / CORTISOL / MELATONIN / CIRCADIAN
+• Can split into a two-part reel if pacing feels rushed</div>
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="tab-panel" id="ep2-caption">
+        <div class="content-block">
+          <div class="content-block-header">
+            <span class="insta-label">✍️ Instagram Caption</span>
+            <button class="copy-btn" onclick="copyText('ep2-caption-text')">📋 Copy Caption</button>
+          </div>
+          <div class="content-block-body" id="ep2-caption-text">Most people think they're bad sleepers. They're not — they're just doing the wrong things in the wrong order. 🌙
+
+Huberman Lab Ep. 2 changed how I think about sleep entirely. Here's the condensed science:
+
+🌅 Morning sunlight within 60 min of waking sets your entire circadian clock
+☕ Delaying coffee 90 min post-waking prevents the afternoon crash
+💡 Bright light at night kills melatonin — even dim overhead lights
+🌡️ Core body temp must DROP 1–3°F to fall asleep (cool room = faster sleep)
+😴 REM sleep is your brain's emotional processor — cut sleep short &amp; you lose it first
+
+The protocol:
+→ Outside sunlight: first thing
+→ Coffee: 90 min after waking
+→ Lights: dim after 10 PM
+→ Bedroom: 65–68°F / 18–20°C
+→ Wake time: same every day (yes, weekends too)
+
+Not one supplement needed to start.
+
+💾 Save this. Your future well-rested self will thank you.
+
+—
+🎧 Huberman Lab Podcast, Episode 2: "Master Your Sleep &amp; Be More Alert When Awake"
+📩 More science breakdowns → link in bio
+
+#HubermanLab #SleepScience #CircadianRhythm #BetterSleep #Melatonin #Cortisol #SleepTips #AndrewHuberman #Neuroscience #SleepBetter #HealthScience #MorningRoutine #ScienceBacked #Biohacking #BrainHealth</div>
+        </div>
+      </div>
+
+      <!-- Stories -->
+      <div class="tab-panel" id="ep2-stories">
+        <div class="content-block-header" style="margin-bottom:1rem;">
+          <span class="insta-label">📱 Instagram Stories — 4 Slides</span>
+        </div>
+        <div class="stories-grid">
+          <div class="story-card">
+            <div class="story-num">Story 1 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">☀️</div>
+              <div class="story-headline">You're ruining your sleep before you even get out of bed.</div>
+              <div class="story-body">Ep. 2 of Huberman Lab reveals the biology of sleep — and how to fix it with free tools.</div>
+            </div>
+            <div class="story-cta">Tap → for the science</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 2 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">🌅</div>
+              <div class="story-headline">Morning sunlight sets your entire day.</div>
+              <div class="story-body">
+                10 min outside within 60 min of waking.<br><br>
+                → Triggers cortisol pulse<br>
+                → Sets circadian clock<br>
+                → Schedules melatonin ~14 hrs later<br><br>
+                Free. Zero effort. Life-changing.
+              </div>
+            </div>
+            <div class="story-cta">Two more tips →</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 3 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">💡</div>
+              <div class="story-headline">The light at night is wrecking your sleep.</div>
+              <div class="story-body">Even dim overhead lights suppress melatonin. After 10 PM: dim lamps only. Amber or red light if possible. Phone screen = terrible. Dark = better.</div>
+            </div>
+            <div class="story-cta">Last one →</div>
+          </div>
+          <div class="story-card">
+            <div class="story-num">Story 4 of 4</div>
+            <div class="story-content">
+              <div class="story-emoji">🛠</div>
+              <div class="story-headline">Tonight's sleep protocol:</div>
+              <div class="story-body">
+                ✅ Cool room: 65–68°F<br>
+                ✅ Warm shower before bed<br>
+                ✅ Dim lights after 10 PM<br>
+                ✅ Same wake time tomorrow<br><br>
+                That's Huberman Lab Ep. 2 in 4 steps.
+              </div>
+            </div>
+            <div class="story-cta">Save &amp; share 🙌</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer style="border-top:1px solid var(--border); padding:2rem; text-align:center; color:var(--muted); font-size:0.8rem;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p style="margin-bottom:0.4rem;">🧠 Huberman Lab Knowledge Hub — Educational content based on the Huberman Lab Podcast</p>
+    <p>All science references from <strong style="color:var(--text);">hubermanlab.com</strong> · For educational purposes only</p>
+  </div>
+</footer>
+
+<script>
+  // Tab switching per episode card
+  function switchTab(btn, ep, panel) {
+    const card = btn.closest('.episode-card');
+    card.querySelectorAll('.ep-tab').forEach(t => t.classList.remove('active'));
+    card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`${ep}-${panel}`).classList.add('active');
+  }
+
+  // Copy text content
+  function copyText(id) {
+    const el = document.getElementById(id);
+    const text = el.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = el.closest('.content-block').querySelector('.copy-btn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Copy all carousel slides
+  function copyCarousel(ep) {
+    const container = document.getElementById(`${ep}-carousel-data`);
+    const slides = container.querySelectorAll('.slide');
+    let text = '';
+    slides.forEach((slide, i) => {
+      const num = slide.querySelector('.slide-num').innerText;
+      const title = slide.querySelector('.slide-title').innerText;
+      const body = slide.querySelector('.slide-body').innerText;
+      text += `${num}\n${title}\n${body}`;
+      if (i < slides.length - 1) text += '\n\n---\n\n';
+    });
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = container.closest('.content-block').querySelector('.copy-btn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Smooth highlight nav on scroll
+  const sections = ['ep1','ep2'];
+  const navLinks = document.querySelectorAll('nav a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 120) current = id;
+    });
+    navLinks.forEach(a => {
+      a.classList.remove('active');
+      if (a.getAttribute('href') === `#${current}`) a.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
